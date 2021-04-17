@@ -2,8 +2,6 @@ import express from 'express';
 import path from 'path';
 import cookieParser from 'cookie-parser';
 
-
-
 /**
  * ROUTES
  */
@@ -20,9 +18,3 @@ app.use('/', indexRouter);
 app.use('/customer', customerRouter);
 app.listen(5000);
 console.log('Listening on port 5000');
-
-
-
-
-
-
