@@ -6,5 +6,5 @@ It serves several APIs regarding the import and export of books
 
 To start the server:
 ````
-run npm install
-run npm start
+npm run install
+npm run start
