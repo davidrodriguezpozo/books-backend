@@ -12,7 +12,7 @@ module.exports = {
         "prettier"
     ],
     rules: {
-        indent: "off",
+        indent: ["warn", 4],
         "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/camelcase": "off",
         "@typescript-eslint/interface-name-prefix": "off",

@@ -1,5 +1,7 @@
 import express, { Request, Response } from 'express';
 import db from '../db';
+import JobServices from '../services/JobServices';
+import BookServices from '../services/BookServices';
 const router = express.Router();
 
 
@@ -13,22 +15,20 @@ const router = express.Router();
  *
  */
 router.post('/export', async (req: Request, res: Response) => {
-      const bookId: string = req.body.bookId;
-      const type: string = req.body.type;
-      const exportTypes = ['epub', 'pdf'];
+    const bookId: number = parseInt(req.body.bookId);
+    const type: string = req.body.type;
+    const exportTypes = ['epub', 'pdf'];
 
-      if(!exportTypes.includes(type)) {
+    if(!exportTypes.includes(type)) {
         res.status(500).send("Export type not supported");
         return;
-      }
-      try {
-        db.run(`INSERT INTO reedsy_exports(book_id, job_type) VALUES(?, ?)`, [bookId, type]);
-        db.all('SELECT * FROM reedsy_exports', (err, rows) => {
-          res.json(rows);
-        });
-      } catch (e: any) {
+    }
+
+    try {
+        res.json(await JobServices.doExport(bookId, type));
+    } catch (e: any) {
         res.status(500).send(`Could not perform export action. Error: ${e.message}`);
-      }
+    }
 });
 
 
@@ -43,25 +43,22 @@ router.post('/export', async (req: Request, res: Response) => {
  *
  */
 router.post('/import', async (req: Request, res: Response) => {
-  const bookId: string = req.body.bookId;
-  const type: string = req.body.type;
-  const url: string = req.body.url;
-  const importTypes: string[] = ['word', 'pdf', 'wattpad', 'evernote'];
+    const bookId: number = parseInt(req.body.bookId);
+    const type: string = req.body.type;
+    const url: string = req.body.url;
+    const importTypes: string[] = ['word', 'pdf', 'wattpad', 'evernote'];
 
-  if (!importTypes.includes(type)){
-    res.status(500).send("Import type not supported");
-    return;
-  }
+    if (!importTypes.includes(type)){
+        res.status(500).send("Import type not supported");
+        return;
+    }
 
 
-  try {
-    db.run(`INSERT INTO reedsy_imports(book_id, job_type, url) VALUES(?, ?, ?)`, [bookId, type, url]);
-    db.all('SELECT * FROM reedsy_imports', (err, rows) => {
-      res.json(rows);
-    });
-  } catch (e: any) {
-    res.status(500).send(`Could not perform import action. Error: ${e.message}`);
-  }
+    try {
+        res.json(await JobServices.doImport(bookId, type, url));
+    } catch (e: any) {
+        res.status(500).send(`Could not perform import action. Error: ${e.message}`);
+    }
 });
 
 
@@ -70,13 +67,11 @@ router.post('/import', async (req: Request, res: Response) => {
  */
 router.get('/exports', async (req: Request, res: Response) => {
 
-  try {
-    db.all('SELECT * FROM reedsy_exports GROUP BY state', (err, rows) => {
-      res.json(rows);
-    });
-  } catch (e: any) {
-    res.status(500).send(`Could not get export jobs. Error: ${e.message}`);
-  }
+    try {
+        res.json(await JobServices.getExports());
+    } catch (e: any) {
+        res.status(500).send(`Could not get export jobs. Error: ${e.message}`);
+    }
 });
 
 /**
@@ -91,31 +86,21 @@ router.get('/exports', async (req: Request, res: Response) => {
  */
 router.get('/imports', async (req: Request, res: Response) => {
 
-  try {
-    db.all('SELECT * FROM reedsy_imports GROUP BY state', (err, rows) => {
-      res.json(rows);
-    });
-  } catch (e: any) {
-    res.status(500).send(`Could not get import jobs. Error: ${e.message}`);
-  }
+    try {
+        res.json(await JobServices.getImports());
+    } catch (e: any) {
+        res.status(500).send(`Could not get import jobs. Error: ${e.message}`);
+    }
 });
 
 
 router.get('/', async (req: Request, res: Response) => {
-  const skip = req.query.skip;
-  try {
-    let totalBooks: number;
-    db.get('SELECT COUNT(*) total_books FROM reedsy_books', (err: Error|null, row: any) => {
-      totalBooks = row.total_books;
-    });
-
-    db.all('SELECT * FROM reedsy_books ORDER BY updated_at DESC LIMIT 10 OFFSET ?', skip || 0,  (err, rows) => {
-      res.json({'rows' : rows, 'total': totalBooks||5});
-    });
-
-  } catch (e: any) {
-    res.status(500).send(`Could not get import jobs. Error: ${e.message}`);
-  }
+    const skip: number = parseInt(req.query.skip as string);
+    try {
+        res.json(await BookServices.getBooks(skip));
+    } catch (e: any) {
+        res.status(500).send(`Could not get import jobs. Error: ${e.message}`);
+    }
 });
 
 
