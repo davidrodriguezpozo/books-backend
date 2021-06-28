@@ -1,4 +1,4 @@
-# reedsy-backend
+# books-backend
 
 Backend for the webpage of the repository *frontend-vue*
 
